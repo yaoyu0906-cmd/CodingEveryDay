@@ -1,7 +1,7 @@
 function signup() {
     const inputs = document.querySelectorAll(".input");
 
-    fetch("http://localhost:5000/signup", {
+    fetch("https://codingeveryday-api.onrender.com/signup", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
@@ -18,7 +18,7 @@ function signup() {
 function login() {
     const inputs = document.querySelectorAll(".input");
 
-    fetch("http://localhost:5000/login", {
+    fetch("https://codingeveryday-api.onrender.com/login", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
