@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: Arial;
+    background: url("../indexbg.jpg") no-repeat center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.box {
+    backdrop-filter: blur(15px);
+    background: rgba(0,0,0,0.6);
+    padding: 40px;
+    border-radius: 15px;
+    width: 320px;
+    text-align: center;
+    color: white;
+}
+
+.btn {
+ width: 6.5em;
+ height: 2.3em;
+ margin: 0.5em;
+ background: black;
+ color: white;
+ border: none;
+ border-radius: 0.625em;
+ font-size: 20px;
+ font-weight: bold;
+ cursor: pointer;
+ position: relative;
+ z-index: 1;
+ overflow: hidden;
+}
+
+button:hover {
+ color: black;
+}
+
+button:after {
+ content: "";
+ background: white;
+ position: absolute;
+ z-index: -1;
+ left: -20%;
+ right: -20%;
+ top: 0;
+ bottom: 0;
+ transform: skewX(-45deg) scale(0, 1);
+ transition: all 0.5s;
+}
+
+button:hover:after {
+ transform: skewX(-45deg) scale(1, 1);
+ transition: all 0.5s;
+}
+
+.input {
+ width: 100%;
+ padding: 12px;
+ margin: 12px 0;
+ border-radius: 10px;
+ border: 1px solid rgba(255,255,255,0.2);
+ background: rgba(255,255,255,0.05);
+ color: white;
+ font-size: 14px;
+ outline: none;
+ transition: 0.25s;
+ backdrop-filter: blur(5px);
+}
+
+.input::placeholder {
+ color: #aaa;
+}
+
+.input:focus {
+ border: 1px solid white;
+ background: rgba(255,255,255,0.1);
+ box-shadow: 0 0 6px rgba(255,255,255,0.25);
+}
+
+a {
+    color: #aaa;
+    font-size: 12px;
+    text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>Login</h2>
+
+    <input class="input" type="text" placeholder="Username">
+    <input class="input" type="password" placeholder="Password">
+
+    <button class="btn" onclick="login()">Login</button>
+
+    <p><a href="/signup">Don't have an account? Sign up</a></p>
+</div>
+
+<script src="../js/auth.js"></script>
+
+</body>
+</html>

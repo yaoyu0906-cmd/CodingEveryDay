@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodingEveryday</title>
+
+<style>
+/* ===== BACKGROUND ===== */
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: url("indexbg.jpg") no-repeat center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===== GLASS CONTAINER ===== */
+.container {
+    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+    width: 300px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+/* ===== TITLE ===== */
+h1 {
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+p {
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 25px;
+}
+
+/* ===== YOUR BUTTON STYLE ===== */
+.btn {
+ width: 8em;
+ height: 2.5em;
+ margin: 0.5em;
+ background: black;
+ color: white;
+ border: none;
+ border-radius: 0.625em;
+ font-size: 18px;
+ font-weight: bold;
+ cursor: pointer;
+ position: relative;
+ z-index: 1;
+ overflow: hidden;
+}
+
+.btn:hover {
+ color: black;
+}
+
+.btn:after {
+ content: "";
+ background: white;
+ position: absolute;
+ z-index: -1;
+ left: -20%;
+ right: -20%;
+ top: 0;
+ bottom: 0;
+ transform: skewX(-45deg) scale(0, 1);
+ transition: all 0.5s;
+}
+
+.btn:hover:after {
+ transform: skewX(-45deg) scale(1, 1);
+}
+
+/* layout buttons */
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* footer */
+.footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>CodingEveryday</h1>
+    <p>Beta Version</p>
+
+    <div class="buttons">
+        <button class="btn" onclick="location.href='/login'">Sign In</button>
+        <button class="btn" onclick="location.href='/signup'">Sign Up</button>
+    </div>
+
+    <div class="footer">
+        <a href="/about" style="color:#aaa; text-decoration:none;">
+            About this website
+        </a>
+    </div>
+</div>
+
+<script>
+function signIn() {
+    alert("Sign In clicked (connect later)");
+    // later: window.location.href = "/signin"
+}
+
+function signUp() {
+    alert("Sign Up clicked (connect later)");
+    // later: window.location.href = "/signup"
+}
+</script>
+
+</body>
+</html>
