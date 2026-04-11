@@ -10,29 +10,138 @@ body {
     font-family: Arial;
     background: url("../indexbg.jpg") no-repeat center/cover;
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     color: white;
 }
 
-.box {
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
     background: rgba(0,0,0,0.6);
-    padding: 40px;
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* MAIN */
+.container {
+    height: calc(100vh - 70px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* PROFILE CARD */
+.profile-card {
+    width: 400px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
     border-radius: 15px;
-    text-align: center;
+    padding: 30px;
+}
+
+/* HEADER */
+.profile-header {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* INFO ROW */
+.row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* LABEL */
+.label {
+    color: #aaa;
+}
+
+/* VALUE */
+.value {
+    font-weight: bold;
+}
+
+/* BUTTON */
+.btn {
+ width: 6.5em;
+ height: 2.3em;
+ margin-top: 20px;
+ background: black;
+ color: white;
+ border: none;
+ border-radius: 0.625em;
+ font-size: 16px;
+ font-weight: bold;
+ cursor: pointer;
+ position: relative;
+ z-index: 1;
+ overflow: hidden;
+}
+
+button:hover { color: black; }
+
+button:after {
+ content: "";
+ background: white;
+ position: absolute;
+ z-index: -1;
+ left: -20%;
+ right: -20%;
+ top: 0;
+ bottom: 0;
+ transform: skewX(-45deg) scale(0, 1);
+ transition: all 0.5s;
+}
+
+button:hover:after {
+ transform: skewX(-45deg) scale(1, 1);
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-    <h2>Profile</h2>
-    <p>Name: Alvin</p>
-    <p>ELO: 1500</p>
-    <p>Tag: Coding Master</p>
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="logo">CodingEveryday</div>
+    <button class="btn" onclick="goMain()">Home</button>
 </div>
 
+<!-- PROFILE -->
+<div class="container">
+    <div class="profile-card">
+
+        <div class="profile-header">Profile</div>
+
+        <div class="row">
+            <div class="label">Name</div>
+            <div class="value">Alvin</div>
+        </div>
+
+        <div class="row">
+            <div class="label">ELO</div>
+            <div class="value">1500</div>
+        </div>
+
+        <div class="row">
+            <div class="label">Tag</div>
+            <div class="value">Coding Master</div>
+        </div>
+
+        <button class="btn" onclick="logout()">Logout</button>
+
+    </div>
+</div>
+
+<script src="../js/main.js"></script>
 </body>
 </html>
