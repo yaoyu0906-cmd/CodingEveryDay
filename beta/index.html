@@ -10,19 +10,42 @@ body {
     font-family: Arial;
     background: url("../indexbg.jpg") no-repeat center/cover;
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     color: white;
 }
 
-.box {
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
     background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* CENTER */
+.container {
+    height: calc(100vh - 70px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* CARD */
+.card {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
     padding: 40px;
     border-radius: 15px;
     text-align: center;
 }
 
+/* YOUR BUTTON CSS */
 .btn {
  width: 6.5em;
  height: 2.3em;
@@ -34,15 +57,44 @@ body {
  font-size: 20px;
  font-weight: bold;
  cursor: pointer;
+ position: relative;
+ z-index: 1;
+ overflow: hidden;
+}
+
+button:hover { color: black; }
+
+button:after {
+ content: "";
+ background: white;
+ position: absolute;
+ z-index: -1;
+ left: -20%;
+ right: -20%;
+ top: 0;
+ bottom: 0;
+ transform: skewX(-45deg) scale(0, 1);
+ transition: all 0.5s;
+}
+
+button:hover:after {
+ transform: skewX(-45deg) scale(1, 1);
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-    <h2>Beta Features</h2>
-    <button class="btn" onclick="goEvents()">Events</button>
+<div class="navbar">
+    <div class="logo">CodingEveryday</div>
+    <button class="btn" onclick="goProfile()">Profile</button>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>Beta Features</h2>
+        <button class="btn" onclick="goEvents()">Events</button>
+    </div>
 </div>
 
 <script src="../js/main.js"></script>
