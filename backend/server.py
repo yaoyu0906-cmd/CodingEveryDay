@@ -1,63 +1,84 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import json
+import psycopg2
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-DB_FILE = "users.json"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# ===== Load users =====
-def load_users():
-    if not os.path.exists(DB_FILE):
-        return {}
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
+def get_conn():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-# ===== Save users =====
-def save_users(users):
-    with open(DB_FILE, "w") as f:
-        json.dump(users, f, indent=4)
+def init_db():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # ===== Signup =====
 @app.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
 
-    users = load_users()
+    if not username or not password:
+        return jsonify({"status": "error", "message": "Missing fields"})
 
-    if username in users:
-        return jsonify({"status": "error", "message": "User already exists"})
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE username = %s", (username,))
+        if cur.fetchone():
+            cur.close()
+            conn.close()
+            return jsonify({"status": "error", "message": "User already exists"})
 
-    users[username] = {
-        "password": password
-    }
-
-    save_users(users)
-
-    return jsonify({"status": "ok", "message": "Account created"})
+        cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"status": "ok", "message": "Account created"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 # ===== Login =====
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
 
-    users = load_users()
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT password FROM users WHERE username = %s", (username,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
 
-    if username not in users:
-        return jsonify({"status": "error", "message": "User not found"})
+        if not row:
+            return jsonify({"status": "error", "message": "User not found"})
+        if row[0] != password:
+            return jsonify({"status": "error", "message": "Wrong password"})
 
-    if users[username]["password"] != password:
-        return jsonify({"status": "error", "message": "Wrong password"})
-
-    return jsonify({"status": "ok", "message": f"Welcome {username}"})
+        return jsonify({"status": "ok", "message": f"Welcome {username}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 # ===== Run =====
 if __name__ == "__main__":
+    init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+init_db()
