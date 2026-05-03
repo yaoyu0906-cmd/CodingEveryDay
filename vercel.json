@@ -1,0 +1,9 @@
+{
+  "routes": [
+    { "src": "/main", "dest": "/main.html" },
+    { "src": "/tools", "dest": "/tools/index.html" },
+    { "src": "/ideas", "dest": "/ideas/index.html" },
+    { "src": "/projects", "dest": "/projects/index.html" },
+    { "src": "/monthly", "dest": "/monthly/index.html" }
+  ]
+}

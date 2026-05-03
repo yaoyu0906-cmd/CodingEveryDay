@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Main</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: url("indexbg.jpg") no-repeat center/cover;
+    min-height: 100vh;
+    color: white;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.greeting {
+    font-size: 14px;
+    color: #ccc;
+}
+
+.container {
+    padding: 32px 24px 40px;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.section-label {
+    color: rgba(255,255,255,0.9);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: bold;
+    margin: 0 0 14px 2px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.4);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 5px;
+}
+
+.section {
+    margin-bottom: 28px;
+}
+
+.card {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+}
+
+.card-row {
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.card-block {
+    padding: 18px 18px 16px;
+}
+
+.card-icon {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.card-title {
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.card-title-lg {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.card-desc {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 14px;
+}
+
+.card-desc-inline {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+}
+
+/* Your original button style */
+.btn {
+    width: 6.5em;
+    height: 2.3em;
+    margin: 0.3em;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.btn-full {
+    width: 100%;
+    height: 2.3em;
+    margin: 0;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+button:hover { color: black; }
+
+button:after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%;
+    right: -20%;
+    top: 0;
+    bottom: 0;
+    transform: skewX(-45deg) scale(0, 1);
+    transition: all 0.5s;
+}
+
+button:hover:after {
+    transform: skewX(-45deg) scale(1, 1);
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">CodingEveryday</div>
+    <div class="nav-right">
+        <span class="greeting" id="greeting"></span>
+        <button class="btn" onclick="goProfile()">Profile</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Tools -->
+    <div class="section">
+        <p class="section-label">Tools</p>
+        <div class="card card-row">
+            <div>
+                <div class="card-title-lg">Dev Tools</div>
+                <div class="card-desc-inline">JSON, regex, color converter & more</div>
+            </div>
+            <button class="btn" onclick="location.href='/tools'">Open</button>
+        </div>
+    </div>
+
+    <!-- Community -->
+    <div class="section">
+        <p class="section-label">Community</p>
+        <div class="card-grid">
+            <div class="card card-block" style="display:flex;flex-direction:column;">
+                <div class="card-icon">💡</div>
+                <div class="card-title">Rate My Idea</div>
+                <div class="card-desc" style="flex:1;">Submit your idea, get community votes</div>
+                <button class="btn-full" onclick="location.href='/ideas'">Enter</button>
+            </div>
+            <div class="card card-block" style="display:flex;flex-direction:column;">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">Rate My Project</div>
+                <div class="card-desc" style="flex:1;">Show your project, get real feedback</div>
+                <button class="btn-full" onclick="location.href='/projects'">Enter</button>
+            </div>
+            <div class="card card-block" style="display:flex;flex-direction:column;">
+                <div class="card-icon">🏆</div>
+                <div class="card-title">Of The Month</div>
+                <div class="card-desc" style="flex:1;">Top rated idea & project monthly</div>
+                <button class="btn-full" onclick="location.href='/monthly'">View</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Experimental -->
+    <div class="section">
+        <p class="section-label">Experimental</p>
+        <div class="card card-row">
+            <div>
+                <div class="card-title-lg">Beta Features</div>
+                <div class="card-desc-inline">Test upcoming experimental features</div>
+            </div>
+            <button class="btn" onclick="goBeta()">Enter</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/main.js"></script>
+<script>
+    document.getElementById("greeting").textContent = "Hey, " + getUsername();
+</script>
+</body>
+</html>

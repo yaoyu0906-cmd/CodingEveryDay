@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Of The Month - CodingEveryday</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: url("../indexbg.jpg") no-repeat center/cover;
+    min-height: 100vh;
+    color: white;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+}
+.logo { font-size: 22px; font-weight: bold; }
+.container { padding: 40px 30px; max-width: 700px; margin: 0 auto; }
+h2 { margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7); }
+.subtitle { color: #ddd; font-size: 14px; margin-bottom: 30px; text-shadow: 0 1px 6px rgba(0,0,0,0.9); background: rgba(0,0,0,0.35); display: inline-block; padding: 4px 10px; border-radius: 6px; }
+.month-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #aaa;
+    margin-bottom: 20px;
+}
+.winner-card {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 28px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+}
+.winner-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #fff, transparent);
+}
+.crown { font-size: 28px; margin-bottom: 8px; }
+.category { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #aaa; margin-bottom: 8px; }
+.winner-title { font-size: 22px; font-weight: bold; margin-bottom: 8px; }
+.winner-desc { font-size: 14px; color: #ccc; margin-bottom: 12px; }
+.winner-meta { font-size: 13px; color: #aaa; }
+.winner-votes { font-size: 13px; color: white; margin-top: 8px; }
+.empty { color: #aaa; font-size: 14px; padding: 10px 0; }
+.btn {
+    padding: 8px 20px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+button:hover { color: black; }
+button:after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%; right: -20%; top: 0; bottom: 0;
+    transform: skewX(-45deg) scale(0,1);
+    transition: all 0.5s;
+}
+button:hover:after { transform: skewX(-45deg) scale(1,1); }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">CodingEveryday</div>
+    <button class="btn" onclick="location.href='/main'">Home</button>
+</div>
+
+<div class="container">
+    <h2>🏆 Of The Month</h2>
+    <div class="subtitle">The highest-rated idea and project from the community</div>
+    <div class="month-label" id="monthLabel"></div>
+
+    <div class="winner-card" id="ideaWinner">
+        <div class="crown">💡</div>
+        <div class="category">Idea of the Month</div>
+        <div id="ideaContent"><div class="empty">No ideas submitted yet.</div></div>
+    </div>
+
+    <div class="winner-card" id="projectWinner">
+        <div class="crown">🚀</div>
+        <div class="category">Project of the Month</div>
+        <div id="projectContent"><div class="empty">No projects submitted yet.</div></div>
+    </div>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const now = new Date();
+document.getElementById('monthLabel').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
+
+// Best idea
+const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
+if (ideas.length > 0) {
+    const best = ideas.reduce((a,b) => a.votes > b.votes ? a : b);
+    document.getElementById('ideaContent').innerHTML = `
+        <div class="winner-title">${escHtml(best.title)}</div>
+        <div class="winner-desc">${escHtml(best.desc)}</div>
+        <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
+        <div class="winner-votes">👍 ${best.votes} votes</div>
+    `;
+}
+
+// Best project
+const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+if (projects.length > 0) {
+    const best = projects.reduce((a,b) => a.votes > b.votes ? a : b);
+    document.getElementById('projectContent').innerHTML = `
+        <div class="winner-title">${escHtml(best.title)}</div>
+        ${best.link ? `<div style="font-size:12px;color:#aaa;margin-bottom:6px;"><a href="${escHtml(best.link)}" target="_blank" style="color:#aaa;">🔗 ${escHtml(best.link)}</a></div>` : ''}
+        <div class="winner-desc">${escHtml(best.desc)}</div>
+        <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
+        <div class="winner-votes">👍 ${best.votes} votes</div>
+    `;
+}
+</script>
+</body>
+</html>

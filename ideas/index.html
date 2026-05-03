@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rate My Idea - CodingEveryday</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: url("../indexbg.jpg") no-repeat center/cover;
+    min-height: 100vh;
+    color: white;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+}
+.logo { font-size: 22px; font-weight: bold; }
+.container { padding: 40px 30px; max-width: 700px; margin: 0 auto; }
+h2 { margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7); }
+.subtitle { color: #ddd; font-size: 14px; margin-bottom: 30px; text-shadow: 0 1px 6px rgba(0,0,0,0.9); background: rgba(0,0,0,0.35); display: inline-block; padding: 4px 10px; border-radius: 6px; }
+.submit-box {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 24px;
+    margin-bottom: 30px;
+}
+.submit-box h3 { margin: 0 0 16px 0; font-size: 16px; }
+input[type=text], textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    padding: 12px;
+    outline: none;
+    margin-bottom: 12px;
+    font-family: Arial;
+}
+input[type=text]:focus, textarea:focus { border-color: white; }
+textarea { resize: vertical; }
+.btn {
+    padding: 8px 20px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+button:hover { color: black; }
+button:after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%; right: -20%; top: 0; bottom: 0;
+    transform: skewX(-45deg) scale(0,1);
+    transition: all 0.5s;
+}
+button:hover:after { transform: skewX(-45deg) scale(1,1); }
+.idea-card {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+.idea-title { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
+.idea-desc { font-size: 13px; color: #ccc; margin-bottom: 12px; }
+.idea-meta { font-size: 12px; color: #777; margin-bottom: 10px; }
+.vote-row { display: flex; align-items: center; gap: 12px; }
+.vote-btn {
+    padding: 5px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+.score { font-size: 18px; font-weight: bold; }
+.tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #aaa;
+    margin-right: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">CodingEveryday</div>
+    <button class="btn" onclick="location.href='/main'">Home</button>
+</div>
+
+<div class="container">
+    <h2>💡 Rate My Idea</h2>
+    <div class="subtitle">Submit your project idea and get community votes</div>
+
+    <div class="submit-box">
+        <h3>Submit Your Idea</h3>
+        <input type="text" id="ideaTitle" placeholder="Idea title (e.g. AI-powered study buddy)">
+        <textarea id="ideaDesc" rows="3" placeholder="Describe your idea in a few sentences..."></textarea>
+        <button class="btn" onclick="submitIdea()">Submit Idea</button>
+    </div>
+
+    <div id="ideasList"></div>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+function loadIdeas() {
+    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
+    const list = document.getElementById('ideasList');
+    if (ideas.length === 0) {
+        list.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px;">No ideas yet. Be the first!</div>';
+        return;
+    }
+    list.innerHTML = ideas.slice().reverse().map((idea, i) => {
+        const realIdx = ideas.length - 1 - i;
+        return `
+        <div class="idea-card">
+            <div class="idea-title">${escHtml(idea.title)}</div>
+            <div class="idea-desc">${escHtml(idea.desc)}</div>
+            <div class="idea-meta">by <strong>${escHtml(idea.author)}</strong></div>
+            <div class="vote-row">
+                <button class="btn vote-btn" onclick="vote(${realIdx}, 1)">👍</button>
+                <span class="score">${idea.votes}</span>
+                <button class="btn vote-btn" onclick="vote(${realIdx}, -1)">👎</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function submitIdea() {
+    const title = document.getElementById('ideaTitle').value.trim();
+    const desc = document.getElementById('ideaDesc').value.trim();
+    if (!title || !desc) { alert('Please fill in both fields.'); return; }
+    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
+    ideas.push({ title, desc, author: getUsername(), votes: 0, date: Date.now() });
+    localStorage.setItem('ideas', JSON.stringify(ideas));
+    document.getElementById('ideaTitle').value = '';
+    document.getElementById('ideaDesc').value = '';
+    loadIdeas();
+}
+
+function vote(idx, val) {
+    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
+    ideas[idx].votes += val;
+    localStorage.setItem('ideas', JSON.stringify(ideas));
+    loadIdeas();
+}
+
+loadIdeas();
+</script>
+</body>
+</html>
