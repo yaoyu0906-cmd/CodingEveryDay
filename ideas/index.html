@@ -81,21 +81,9 @@ button:hover:after { transform: skewX(-45deg) scale(1,1); }
 .idea-desc { font-size: 13px; color: #ccc; margin-bottom: 12px; }
 .idea-meta { font-size: 12px; color: #777; margin-bottom: 10px; }
 .vote-row { display: flex; align-items: center; gap: 12px; }
-.vote-btn {
-    padding: 5px 14px;
-    font-size: 13px;
-    border-radius: 6px;
-}
+.vote-btn { padding: 5px 14px; font-size: 13px; border-radius: 6px; }
 .score { font-size: 18px; font-weight: bold; }
-.tag {
-    display: inline-block;
-    background: rgba(255,255,255,0.1);
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 11px;
-    color: #aaa;
-    margin-right: 4px;
-}
+.empty { color: #aaa; text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
@@ -116,54 +104,68 @@ button:hover:after { transform: skewX(-45deg) scale(1,1); }
         <button class="btn" onclick="submitIdea()">Submit Idea</button>
     </div>
 
-    <div id="ideasList"></div>
+    <div id="ideasList"><div class="empty">Loading...</div></div>
 </div>
 
 <script src="../js/main.js"></script>
 <script>
-function loadIdeas() {
-    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
-    const list = document.getElementById('ideasList');
-    if (ideas.length === 0) {
-        list.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px;">No ideas yet. Be the first!</div>';
-        return;
-    }
-    list.innerHTML = ideas.slice().reverse().map((idea, i) => {
-        const realIdx = ideas.length - 1 - i;
-        return `
-        <div class="idea-card">
-            <div class="idea-title">${escHtml(idea.title)}</div>
-            <div class="idea-desc">${escHtml(idea.desc)}</div>
-            <div class="idea-meta">by <strong>${escHtml(idea.author)}</strong></div>
-            <div class="vote-row">
-                <button class="btn vote-btn" onclick="vote(${realIdx}, 1)">👍</button>
-                <span class="score">${idea.votes}</span>
-                <button class="btn vote-btn" onclick="vote(${realIdx}, -1)">👎</button>
-            </div>
-        </div>`;
-    }).join('');
-}
+const API = "https://codingeveryday-api.onrender.com";
 
 function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function submitIdea() {
+async function loadIdeas() {
+    const list = document.getElementById('ideasList');
+    try {
+        const res = await fetch(API + "/ideas");
+        const data = await res.json();
+        if (!data.ideas || data.ideas.length === 0) {
+            list.innerHTML = '<div class="empty">No ideas yet. Be the first!</div>';
+            return;
+        }
+        list.innerHTML = data.ideas.map(idea => `
+            <div class="idea-card">
+                <div class="idea-title">${escHtml(idea.title)}</div>
+                <div class="idea-desc">${escHtml(idea.desc)}</div>
+                <div class="idea-meta">by <strong>${escHtml(idea.author)}</strong></div>
+                <div class="vote-row">
+                    <button class="btn vote-btn" onclick="vote(${idea.id}, 1)">👍</button>
+                    <span class="score" id="score-${idea.id}">${idea.votes}</span>
+                    <button class="btn vote-btn" onclick="vote(${idea.id}, -1)">👎</button>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="empty">Failed to load ideas.</div>';
+    }
+}
+
+async function submitIdea() {
     const title = document.getElementById('ideaTitle').value.trim();
     const desc = document.getElementById('ideaDesc').value.trim();
     if (!title || !desc) { alert('Please fill in both fields.'); return; }
-    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
-    ideas.push({ title, desc, author: getUsername(), votes: 0, date: Date.now() });
-    localStorage.setItem('ideas', JSON.stringify(ideas));
-    document.getElementById('ideaTitle').value = '';
-    document.getElementById('ideaDesc').value = '';
-    loadIdeas();
+
+    const res = await fetch(API + "/ideas", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ title, desc, author: getUsername() })
+    });
+    const data = await res.json();
+    if (data.status === "ok") {
+        document.getElementById('ideaTitle').value = '';
+        document.getElementById('ideaDesc').value = '';
+        loadIdeas();
+    } else {
+        alert(data.message);
+    }
 }
 
-function vote(idx, val) {
-    const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
-    ideas[idx].votes += val;
-    localStorage.setItem('ideas', JSON.stringify(ideas));
+async function vote(id, val) {
+    await fetch(API + "/ideas/vote", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id, val })
+    });
     loadIdeas();
 }
 
