@@ -85,6 +85,7 @@ button:hover:after { transform: skewX(-45deg) scale(1,1); }
 .vote-row { display: flex; align-items: center; gap: 12px; }
 .vote-btn { padding: 5px 14px; font-size: 13px; border-radius: 6px; }
 .score { font-size: 18px; font-weight: bold; }
+.empty { color: #aaa; text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
@@ -106,57 +107,71 @@ button:hover:after { transform: skewX(-45deg) scale(1,1); }
         <button class="btn" onclick="submitProject()">Submit Project</button>
     </div>
 
-    <div id="projectsList"></div>
+    <div id="projectsList"><div class="empty">Loading...</div></div>
 </div>
 
 <script src="../js/main.js"></script>
 <script>
+const API = "https://codingeveryday-api.onrender.com";
+
 function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function loadProjects() {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+async function loadProjects() {
     const list = document.getElementById('projectsList');
-    if (projects.length === 0) {
-        list.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px;">No projects yet. Be the first!</div>';
-        return;
+    try {
+        const res = await fetch(API + "/projects");
+        const data = await res.json();
+        if (!data.projects || data.projects.length === 0) {
+            list.innerHTML = '<div class="empty">No projects yet. Be the first!</div>';
+            return;
+        }
+        list.innerHTML = data.projects.map(p => `
+            <div class="project-card">
+                <div class="project-title">${escHtml(p.title)}</div>
+                ${p.link ? `<div class="project-link"><a href="${escHtml(p.link)}" target="_blank">🔗 ${escHtml(p.link)}</a></div>` : ''}
+                <div class="project-desc">${escHtml(p.desc)}</div>
+                <div class="project-meta">by <strong>${escHtml(p.author)}</strong></div>
+                <div class="vote-row">
+                    <button class="btn vote-btn" onclick="vote(${p.id}, 1)">👍</button>
+                    <span class="score" id="score-${p.id}">${p.votes}</span>
+                    <button class="btn vote-btn" onclick="vote(${p.id}, -1)">👎</button>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="empty">Failed to load projects.</div>';
     }
-    list.innerHTML = projects.slice().reverse().map((p, i) => {
-        const realIdx = projects.length - 1 - i;
-        return `
-        <div class="project-card">
-            <div class="project-title">${escHtml(p.title)}</div>
-            ${p.link ? `<div class="project-link"><a href="${escHtml(p.link)}" target="_blank">🔗 ${escHtml(p.link)}</a></div>` : ''}
-            <div class="project-desc">${escHtml(p.desc)}</div>
-            <div class="project-meta">by <strong>${escHtml(p.author)}</strong></div>
-            <div class="vote-row">
-                <button class="btn vote-btn" onclick="vote(${realIdx}, 1)">👍</button>
-                <span class="score">${p.votes}</span>
-                <button class="btn vote-btn" onclick="vote(${realIdx}, -1)">👎</button>
-            </div>
-        </div>`;
-    }).join('');
 }
 
-function submitProject() {
+async function submitProject() {
     const title = document.getElementById('projTitle').value.trim();
     const link = document.getElementById('projLink').value.trim();
     const desc = document.getElementById('projDesc').value.trim();
-    if (!title || !desc) { alert('Please fill in the title and description.'); return; }
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    projects.push({ title, link, desc, author: getUsername(), votes: 0, date: Date.now() });
-    localStorage.setItem('projects', JSON.stringify(projects));
-    document.getElementById('projTitle').value = '';
-    document.getElementById('projLink').value = '';
-    document.getElementById('projDesc').value = '';
-    loadProjects();
+    if (!title || !desc) { alert('Please fill in title and description.'); return; }
+
+    const res = await fetch(API + "/projects", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ title, link, desc, author: getUsername() })
+    });
+    const data = await res.json();
+    if (data.status === "ok") {
+        document.getElementById('projTitle').value = '';
+        document.getElementById('projLink').value = '';
+        document.getElementById('projDesc').value = '';
+        loadProjects();
+    } else {
+        alert(data.message);
+    }
 }
 
-function vote(idx, val) {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    projects[idx].votes += val;
-    localStorage.setItem('projects', JSON.stringify(projects));
+async function vote(id, val) {
+    await fetch(API + "/projects/vote", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id, val })
+    });
     loadProjects();
 }
 
