@@ -23,13 +23,7 @@ body {
 .container { padding: 40px 30px; max-width: 700px; margin: 0 auto; }
 h2 { margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7); }
 .subtitle { color: #ddd; font-size: 14px; margin-bottom: 30px; text-shadow: 0 1px 6px rgba(0,0,0,0.9); background: rgba(0,0,0,0.35); display: inline-block; padding: 4px 10px; border-radius: 6px; }
-.month-label {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #aaa;
-    margin-bottom: 20px;
-}
+.month-label { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #aaa; margin-bottom: 20px; }
 .winner-card {
     background: rgba(0,0,0,0.6);
     backdrop-filter: blur(12px);
@@ -92,53 +86,73 @@ button:hover:after { transform: skewX(-45deg) scale(1,1); }
     <div class="subtitle">The highest-rated idea and project from the community</div>
     <div class="month-label" id="monthLabel"></div>
 
-    <div class="winner-card" id="ideaWinner">
+    <div class="winner-card">
         <div class="crown">💡</div>
         <div class="category">Idea of the Month</div>
-        <div id="ideaContent"><div class="empty">No ideas submitted yet.</div></div>
+        <div id="ideaContent"><div class="empty">Loading...</div></div>
     </div>
 
-    <div class="winner-card" id="projectWinner">
+    <div class="winner-card">
         <div class="crown">🚀</div>
         <div class="category">Project of the Month</div>
-        <div id="projectContent"><div class="empty">No projects submitted yet.</div></div>
+        <div id="projectContent"><div class="empty">Loading...</div></div>
     </div>
 </div>
 
 <script src="../js/main.js"></script>
 <script>
+const API = "https://codingeveryday-api.onrender.com";
+
 function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const now = new Date();
 document.getElementById('monthLabel').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
 
-// Best idea
-const ideas = JSON.parse(localStorage.getItem('ideas') || '[]');
-if (ideas.length > 0) {
-    const best = ideas.reduce((a,b) => a.votes > b.votes ? a : b);
-    document.getElementById('ideaContent').innerHTML = `
-        <div class="winner-title">${escHtml(best.title)}</div>
-        <div class="winner-desc">${escHtml(best.desc)}</div>
-        <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
-        <div class="winner-votes">👍 ${best.votes} votes</div>
-    `;
+async function loadWinners() {
+    // Best idea
+    try {
+        const res = await fetch(API + "/ideas");
+        const data = await res.json();
+        const el = document.getElementById('ideaContent');
+        if (data.ideas && data.ideas.length > 0) {
+            const best = data.ideas.reduce((a,b) => a.votes > b.votes ? a : b);
+            el.innerHTML = `
+                <div class="winner-title">${escHtml(best.title)}</div>
+                <div class="winner-desc">${escHtml(best.desc)}</div>
+                <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
+                <div class="winner-votes">👍 ${best.votes} votes</div>`;
+        } else {
+            el.innerHTML = '<div class="empty">No ideas submitted yet.</div>';
+        }
+    } catch(e) {
+        document.getElementById('ideaContent').innerHTML = '<div class="empty">Failed to load.</div>';
+    }
+
+    // Best project
+    try {
+        const res = await fetch(API + "/projects");
+        const data = await res.json();
+        const el = document.getElementById('projectContent');
+        if (data.projects && data.projects.length > 0) {
+            const best = data.projects.reduce((a,b) => a.votes > b.votes ? a : b);
+            el.innerHTML = `
+                <div class="winner-title">${escHtml(best.title)}</div>
+                ${best.link ? `<div style="font-size:12px;color:#aaa;margin-bottom:6px;"><a href="${escHtml(best.link)}" target="_blank" style="color:#aaa;">🔗 ${escHtml(best.link)}</a></div>` : ''}
+                <div class="winner-desc">${escHtml(best.desc)}</div>
+                <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
+                <div class="winner-votes">👍 ${best.votes} votes</div>`;
+        } else {
+            el.innerHTML = '<div class="empty">No projects submitted yet.</div>';
+        }
+    } catch(e) {
+        document.getElementById('projectContent').innerHTML = '<div class="empty">Failed to load.</div>';
+    }
 }
 
-// Best project
-const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-if (projects.length > 0) {
-    const best = projects.reduce((a,b) => a.votes > b.votes ? a : b);
-    document.getElementById('projectContent').innerHTML = `
-        <div class="winner-title">${escHtml(best.title)}</div>
-        ${best.link ? `<div style="font-size:12px;color:#aaa;margin-bottom:6px;"><a href="${escHtml(best.link)}" target="_blank" style="color:#aaa;">🔗 ${escHtml(best.link)}</a></div>` : ''}
-        <div class="winner-desc">${escHtml(best.desc)}</div>
-        <div class="winner-meta">by <strong>${escHtml(best.author)}</strong></div>
-        <div class="winner-votes">👍 ${best.votes} votes</div>
-    `;
-}
+loadWinners();
 </script>
 </body>
 </html>
