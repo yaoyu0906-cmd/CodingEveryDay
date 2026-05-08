@@ -30,6 +30,7 @@ body {
 .nav-btns {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .container {
@@ -72,7 +73,7 @@ body {
 .btn {
     width: 6.5em;
     height: 2.3em;
-    margin-top: 20px;
+    margin-top: 0;
     background: black;
     color: white;
     border: none;
@@ -151,20 +152,17 @@ button:hover:after {
 
         <div class="row">
             <div class="label">Name</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span class="value" id="nameDisplay"></span>
-                <input class="edit-input" id="nameInput" style="display:none;" type="text">
-            </div>
+            <div class="value" id="nameDisplay"></div>
         </div>
 
         <div class="row">
-            <div class="label">ELO</div>
-            <div class="value">1500</div>
+            <div class="label">Likes</div>
+            <div class="value" id="likesCount">Loading...</div>
         </div>
 
         <div class="row">
-            <div class="label">Tag</div>
-            <div class="value">Coding Master</div>
+            <div class="label">Uploads</div>
+            <div class="value" id="uploadCount">Loading...</div>
         </div>
 
         <button class="btn" onclick="logout()">Logout</button>
@@ -174,35 +172,47 @@ button:hover:after {
 
 <script src="../js/main.js"></script>
 <script>
-    // Show username on load
     const username = getUsername();
     document.getElementById("nameDisplay").textContent = username;
 
-    function toggleEdit() {
-        const display = document.getElementById("nameDisplay");
-        const input = document.getElementById("nameInput");
-        const btn = document.getElementById("editBtn");
+    // Fetch stats
+    const API = "https://codingeveryday-api.onrender.com";
+    async function loadStats() {
+        try {
+            const [ideas, projects, qa, upgrades] = await Promise.all([
+                fetch(API + "/ideas?username=" + encodeURIComponent(username)).then(r=>r.json()),
+                fetch(API + "/projects?username=" + encodeURIComponent(username)).then(r=>r.json()),
+                fetch(API + "/qa?username=" + encodeURIComponent(username)).then(r=>r.json()),
+                fetch(API + "/upgrades?username=" + encodeURIComponent(username)).then(r=>r.json()),
+            ]);
 
-        if (input.style.display === "none") {
-            // Enter edit mode
-            input.value = display.textContent;
-            input.style.display = "inline-block";
-            display.style.display = "none";
-            btn.textContent = "Save";
-        } else {
-            // Save
-            const newName = input.value.trim();
-            if (!newName) {
-                alert("Name cannot be empty.");
-                return;
-            }
-            localStorage.setItem("username", newName);
-            display.textContent = newName;
-            input.style.display = "none";
-            display.style.display = "inline";
-            btn.textContent = "Edit";
+            const mine = (arr) => arr.filter(x => x.author === username);
+
+            const myIdeas    = mine(ideas.ideas    || []);
+            const myProjects = mine(projects.projects || []);
+            const myQA       = mine(qa.questions   || []);
+            const myUpgrades = mine(upgrades.upgrades || []);
+
+            // total likes = sum of votes on all my posts
+            const totalLikes =
+                myIdeas.reduce((s,x)=>s+x.votes,0) +
+                myProjects.reduce((s,x)=>s+x.votes,0) +
+                myQA.reduce((s,x)=>s+x.votes,0) +
+                myUpgrades.reduce((s,x)=>s+x.votes,0);
+
+            // total uploads = ideas + projects + qa + upgrades posted
+            const totalUploads = myIdeas.length + myProjects.length + myQA.length + myUpgrades.length;
+
+            document.getElementById("likesCount").textContent = totalLikes;
+            document.getElementById("uploadCount").textContent = totalUploads;
+        } catch(e) {
+            document.getElementById("likesCount").textContent = "—";
+            document.getElementById("uploadCount").textContent = "—";
         }
     }
+    loadStats();
+
+
 </script>
 </body>
 </html>
