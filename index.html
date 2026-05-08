@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>CodingEveryday</title>
-
 <style>
-/* ===== BACKGROUND ===== */
 body {
     margin: 0;
     height: 100vh;
@@ -16,113 +14,171 @@ body {
     align-items: center;
 }
 
-/* ===== GLASS CONTAINER ===== */
 .container {
     backdrop-filter: blur(12px);
-    background: rgba(0, 0, 0, 0.6);
-    padding: 40px;
+    background: rgba(0,0,0,0.6);
+    padding: 48px 44px 40px;
     border-radius: 15px;
     text-align: center;
     color: white;
-    width: 300px;
+    width: 340px;
     box-shadow: 0 0 30px rgba(0,0,0,0.5);
 }
 
-/* ===== TITLE ===== */
-h1 {
-    margin-bottom: 10px;
+.logo {
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 16px;
+}
+
+.tagline {
     font-size: 28px;
+    font-weight: bold;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
-p {
-    font-size: 14px;
-    color: #ccc;
-    margin-bottom: 25px;
+.sub {
+    font-size: 13px;
+    color: #bbb;
+    margin-bottom: 32px;
+    line-height: 1.5;
 }
 
-/* ===== YOUR BUTTON STYLE ===== */
-.btn {
- width: 8em;
- height: 2.5em;
- margin: 0.5em;
- background: black;
- color: white;
- border: none;
- border-radius: 0.625em;
- font-size: 18px;
- font-weight: bold;
- cursor: pointer;
- position: relative;
- z-index: 1;
- overflow: hidden;
-}
-
-.btn:hover {
- color: black;
-}
-
-.btn:after {
- content: "";
- background: white;
- position: absolute;
- z-index: -1;
- left: -20%;
- right: -20%;
- top: 0;
- bottom: 0;
- transform: skewX(-45deg) scale(0, 1);
- transition: all 0.5s;
-}
-
-.btn:hover:after {
- transform: skewX(-45deg) scale(1, 1);
-}
-
-/* layout buttons */
-.buttons {
+/* main buttons row */
+.main-btns {
     display: flex;
     justify-content: center;
     gap: 10px;
+    margin-bottom: 14px;
 }
 
-/* footer */
-.footer {
-    margin-top: 20px;
-    font-size: 12px;
-    color: #aaa;
+/* try it out full width */
+.try-btn {
+    width: 100%;
+    margin-bottom: 16px;
 }
+
+/* secondary row */
+.secondary-btns {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* base button */
+.btn {
+    height: 2.5em;
+    padding: 0 1.2em;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.btn-wide {
+    width: 8.5em;
+}
+
+.btn-sm {
+    height: 2em;
+    padding: 0 1em;
+    font-size: 13px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* color variants */
+.btn-blue  { background: #2563eb; }
+.btn-green { background: #16a34a; }
+
+/* hover text color */
+.btn:hover, .btn-sm:hover { color: black; }
+
+/* sweep effect */
+.btn:after, .btn-sm:after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%; right: -20%;
+    top: 0; bottom: 0;
+    transform: skewX(-45deg) scale(0,1);
+    transition: all 0.5s;
+}
+.btn:hover:after, .btn-sm:hover:after {
+    transform: skewX(-45deg) scale(1,1);
+}
+
+/* try it out */
+.btn-full {
+    width: 87.57%;
+    height: 2.5em;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.btn-full:hover { color: black; }
+.btn-full:after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%; right: -20%;
+    top: 0; bottom: 0;
+    transform: skewX(-45deg) scale(0,1);
+    transition: all 0.5s;
+}
+.btn-full:hover:after { transform: skewX(-45deg) scale(1,1); }
 </style>
 </head>
 
 <body>
-
 <div class="container">
-    <h1>CodingEveryday</h1>
-    <p>Beta Version</p>
 
-    <div class="buttons">
-        <button class="btn" onclick="location.href='/login'">Sign In</button>
-        <button class="btn" onclick="location.href='/signup'">Sign Up</button>
+    <div class="logo">CodingEveryday</div>
+
+    <div class="tagline">The Essential<br>for Every Dev</div>
+    <div class="sub">Tools, community, Q&A and more —<br>all in one place for coders.</div>
+
+    <div class="main-btns">
+        <button class="btn btn-wide btn-blue" onclick="location.href='/login'">Sign In</button>
+        <button class="btn btn-wide btn-green" onclick="location.href='/signup'">Sign Up</button>
     </div>
 
-    <div class="footer">
-        <a href="/about" style="color:#aaa; text-decoration:none;">
-            About this website
-        </a>
+    <button class="btn-full" onclick="location.href='/main'">Try it out ↗</button>
+
+    <div class="secondary-btns">
+        <button class="btn-sm" onclick="location.href='/about'">About</button>
+        <button class="btn-sm" onclick="location.href='https://github.com/yaoyu0906-cmd/CodingEveryDay'" target="_blank">Source Code</button>
     </div>
+
 </div>
-
-<script>
-function signIn() {
-    alert("Sign In clicked (connect later)");
-    // later: window.location.href = "/signin"
-}
-
-function signUp() {
-    alert("Sign Up clicked (connect later)");
-    // later: window.location.href = "/signup"
-}
-</script>
-
 </body>
 </html>
