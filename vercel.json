@@ -4,6 +4,8 @@
     { "src": "/tools", "dest": "/tools/index.html" },
     { "src": "/ideas", "dest": "/ideas/index.html" },
     { "src": "/projects", "dest": "/projects/index.html" },
-    { "src": "/monthly", "dest": "/monthly/index.html" }
+    { "src": "/monthly", "dest": "/monthly/index.html" },
+    { "src": "/qa", "dest": "/qa/index.html" },
+    { "src": "/upgrade", "dest": "/upgrade/index.html" }
   ]
 }
