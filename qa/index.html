@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dev Q&A - CodingEveryday</title>
+<style>
+body{margin:0;font-family:Arial;background:url("../indexbg.jpg") no-repeat center/cover;min-height:100vh;color:white;}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);}
+.logo{font-size:22px;font-weight:bold;}
+.container{padding:40px 30px;max-width:700px;margin:0 auto;}
+h2{margin-bottom:6px;text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 20px rgba(0,0,0,0.7);}
+.subtitle{color:#ddd;font-size:14px;margin-bottom:24px;text-shadow:0 1px 6px rgba(0,0,0,0.9);background:rgba(0,0,0,0.35);display:inline-block;padding:4px 10px;border-radius:6px;}
+.box{background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);border-radius:15px;padding:24px;margin-bottom:20px;}
+.card{background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);border-radius:12px;padding:20px;margin-bottom:16px;}
+input[type=text],textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:white;font-size:14px;padding:12px;outline:none;margin-bottom:12px;font-family:Arial;}
+input[type=text]:focus,textarea:focus{border-color:white;}
+textarea{resize:vertical;}
+.btn{padding:8px 20px;background:black;color:white;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;position:relative;z-index:1;overflow:hidden;margin-right:6px;}
+.btn-sm{padding:4px 12px;background:black;color:white;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;position:relative;z-index:1;overflow:hidden;margin-right:4px;}
+button:hover{color:black;}
+button:after{content:"";background:white;position:absolute;z-index:-1;left:-20%;right:-20%;top:0;bottom:0;transform:skewX(-45deg) scale(0,1);transition:all 0.5s;}
+button:hover:after{transform:skewX(-45deg) scale(1,1);}
+.vote-row{display:flex;align-items:center;gap:10px;margin-top:10px;}
+.score{font-size:16px;font-weight:bold;}
+.vote-btn.active-up,.vote-btn.active-down{background:white!important;color:black!important;}
+.empty{color:#aaa;text-align:center;padding:20px;}
+.guest-notice{background:rgba(255,200,0,0.12);border:1px solid rgba(255,200,0,0.3);border-radius:8px;padding:10px 16px;font-size:13px;color:#ffd966;margin-bottom:20px;}
+.answers-section{margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;}
+.answer{background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;margin-bottom:10px;}
+.answer-author{font-size:12px;font-weight:bold;color:#aaa;margin-bottom:6px;}
+.answer-text{font-size:13px;color:#ddd;white-space:pre-wrap;word-break:break-word;}
+.answer-vote{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.answer-input{margin-top:12px;}
+.answer-input textarea{margin-bottom:8px;}
+.best-badge{background:rgba(255,255,255,0.15);border-radius:4px;padding:2px 8px;font-size:11px;color:#fff;margin-left:8px;}
+</style>
+</head>
+<body>
+<div class="navbar">
+  <div class="logo">CodingEveryday</div>
+  <button class="btn" onclick="location.href='/main'">Home</button>
+</div>
+<div class="container">
+  <h2>🗣️ Dev Q&A</h2>
+  <div class="subtitle">Ask anything — the community has answers</div>
+  <div id="guestNotice" class="guest-notice" style="display:none;">👋 You're viewing as a guest. <a href="/login" style="color:#ffd966;">Log in</a> to ask or answer questions.</div>
+  <div class="box" id="submitBox">
+    <h3 style="margin:0 0 16px 0;font-size:16px;">Ask a Question</h3>
+    <input type="text" id="qaTitle" placeholder="Short title (e.g. How do I center a div in CSS?)">
+    <textarea id="qaDesc" rows="3" placeholder="More details about your question..."></textarea>
+    <button class="btn" onclick="submitQ()">Ask</button>
+  </div>
+  <div id="qaList"><div class="empty">Loading...</div></div>
+</div>
+<script src="../js/main.js"></script>
+<script>
+const API="https://codingeveryday-api.onrender.com";
+const ME=getUsername();
+const LOGGEDIN=ME&&ME!=="Guest";
+if(!LOGGEDIN){document.getElementById("guestNotice").style.display="block";document.getElementById("submitBox").style.display="none";}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+async function loadQA(){
+  const list=document.getElementById("qaList");
+  try{
+    const res=await fetch(API+"/qa?username="+encodeURIComponent(ME));
+    const data=await res.json();
+    if(!data.questions||!data.questions.length){list.innerHTML='<div class="empty">No questions yet. Be the first to ask!</div>';return;}
+    list.innerHTML=data.questions.map(q=>`
+      <div class="card">
+        <div style="font-size:17px;font-weight:bold;margin-bottom:6px;">${esc(q.title)}</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:8px;">${esc(q.desc)}</div>
+        <div style="font-size:12px;color:#777;">by <strong>${esc(q.author)}</strong></div>
+        <div class="vote-row">
+          ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${q.uservote===1?"active-up":""}" onclick="voteQ(${q.id},1)">👍</button>`:`<button class="btn btn-sm" onclick="noAuth()">👍</button>`}
+          <span class="score">${q.votes}</span>
+          ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${q.uservote===-1?"active-down":""}" onclick="voteQ(${q.id},-1)">👎</button>`:`<button class="btn btn-sm" onclick="noAuth()">👎</button>`}
+        </div>
+        <div class="answers-section">
+          <div id="answers-${q.id}"></div>
+          ${LOGGEDIN?`<div class="answer-input"><textarea id="ai-${q.id}" rows="3" placeholder="Write your answer..."></textarea><button class="btn" onclick="postAnswer(${q.id})">Answer</button></div>`:`<div style="font-size:12px;color:#aaa;margin-top:8px;"><a href="/login" style="color:#ffd966;">Log in</a> to answer</div>`}
+        </div>
+      </div>`).join("");
+    data.questions.forEach(q=>loadAnswers(q.id));
+  }catch(e){list.innerHTML='<div class="empty">Failed to load.</div>';}
+}
+
+async function loadAnswers(id){
+  const res=await fetch(API+"/qa/"+id+"/answers?username="+encodeURIComponent(ME));
+  const data=await res.json();
+  const el=document.getElementById("answers-"+id);
+  if(!el)return;
+  if(!data.answers||!data.answers.length){el.innerHTML='<div style="font-size:12px;color:#555;margin-bottom:8px;">No answers yet.</div>';return;}
+  el.innerHTML=data.answers.map((a,i)=>`
+    <div class="answer" ${i===0?"style='border:1px solid rgba(255,255,255,0.15);'":""}>
+      <div class="answer-author">${esc(a.author)}${i===0?'<span class="best-badge">⭐ Best</span>':""}</div>
+      <div class="answer-text">${esc(a.content)}</div>
+      <div class="answer-vote">
+        ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${a.uservote===1?"active-up":""}" onclick="voteAnswer(${id},${a.id},1)">👍</button>`:`<button class="btn btn-sm" onclick="noAuth()">👍</button>`}
+        <span style="font-size:13px;font-weight:bold;">${a.votes}</span>
+        ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${a.uservote===-1?"active-down":""}" onclick="voteAnswer(${id},${a.id},-1)">👎</button>`:`<button class="btn btn-sm" onclick="noAuth()">👎</button>`}
+      </div>
+    </div>`).join("");
+}
+
+async function submitQ(){
+  const title=document.getElementById("qaTitle").value.trim();
+  const desc=document.getElementById("qaDesc").value.trim();
+  if(!title||!desc){alert("Fill in both fields.");return;}
+  const r=await fetch(API+"/qa",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,desc,username:ME})});
+  const d=await r.json();
+  if(d.status==="ok"){document.getElementById("qaTitle").value="";document.getElementById("qaDesc").value="";loadQA();}
+  else alert(d.message);
+}
+
+async function voteQ(id,val){
+  await fetch(API+"/qa/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,val,username:ME})});
+  loadQA();
+}
+
+async function postAnswer(id){
+  const ta=document.getElementById("ai-"+id);
+  const content=ta.value.trim();
+  if(!content)return;
+  await fetch(API+"/qa/"+id+"/answers",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content,username:ME})});
+  ta.value="";
+  loadAnswers(id);
+}
+
+async function voteAnswer(qId,aId,val){
+  await fetch(API+"/qa/answers/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:aId,val,username:ME})});
+  loadAnswers(qId);
+}
+
+function noAuth(){alert("Please log in to interact.");}
+loadQA();
+</script>
+</body>
+</html>

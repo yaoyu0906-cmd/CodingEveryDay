@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Upgrade the Code - CodingEveryday</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+body{margin:0;font-family:Arial;background:url("../indexbg.jpg") no-repeat center/cover;min-height:100vh;color:white;}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);}
+.logo{font-size:22px;font-weight:bold;}
+.container{padding:40px 30px;max-width:760px;margin:0 auto;}
+h2{margin-bottom:6px;text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 20px rgba(0,0,0,0.7);}
+.subtitle{color:#ddd;font-size:14px;margin-bottom:24px;text-shadow:0 1px 6px rgba(0,0,0,0.9);background:rgba(0,0,0,0.35);display:inline-block;padding:4px 10px;border-radius:6px;}
+.box{background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);border-radius:15px;padding:24px;margin-bottom:20px;}
+.card{background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);border-radius:12px;padding:20px;margin-bottom:16px;}
+input[type=text],textarea,select{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:white;font-size:14px;padding:12px;outline:none;margin-bottom:12px;font-family:Arial;}
+input[type=text]:focus,textarea:focus,select:focus{border-color:white;}
+select option{background:#111;}
+textarea{resize:vertical;}
+.btn{padding:8px 20px;background:black;color:white;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;position:relative;z-index:1;overflow:hidden;margin-right:6px;}
+.btn-sm{padding:4px 12px;background:black;color:white;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;position:relative;z-index:1;overflow:hidden;margin-right:4px;}
+button:hover{color:black;}
+button:after{content:"";background:white;position:absolute;z-index:-1;left:-20%;right:-20%;top:0;bottom:0;transform:skewX(-45deg) scale(0,1);transition:all 0.5s;}
+button:hover:after{transform:skewX(-45deg) scale(1,1);}
+.vote-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.score{font-size:16px;font-weight:bold;}
+.vote-btn.active-up,.vote-btn.active-down{background:white!important;color:black!important;}
+.empty{color:#aaa;text-align:center;padding:20px;}
+.guest-notice{background:rgba(255,200,0,0.12);border:1px solid rgba(255,200,0,0.3);border-radius:8px;padding:10px 16px;font-size:13px;color:#ffd966;margin-bottom:20px;}
+pre{margin:8px 0;border-radius:8px;overflow-x:auto;}
+pre code{font-size:13px;}
+.lang-tag{display:inline-block;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;font-size:11px;color:#aaa;margin-bottom:8px;}
+.versions-section{margin-top:14px;}
+.toggle-btn{font-size:13px;color:#aaa;cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:5px 12px;margin-top:8px;}
+.toggle-btn:hover{color:black;}
+.versions-panel{display:none;margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;}
+.version-card{background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;margin-bottom:12px;}
+.version-author{font-size:13px;font-weight:bold;color:#aaa;margin-bottom:6px;}
+.version-explanation{font-size:13px;color:#ccc;margin-bottom:8px;font-style:italic;}
+.version-vote{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.submit-version{margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;}
+</style>
+</head>
+<body>
+<div class="navbar">
+  <div class="logo">CodingEveryday</div>
+  <button class="btn" onclick="location.href='/main'">Home</button>
+</div>
+<div class="container">
+  <h2>⚡ Upgrade the Code</h2>
+  <div class="subtitle">Post your code — let the community make it better</div>
+  <div id="guestNotice" class="guest-notice" style="display:none;">👋 You're viewing as a guest. <a href="/login" style="color:#ffd966;">Log in</a> to submit or upgrade code.</div>
+  <div class="box" id="submitBox">
+    <h3 style="margin:0 0 16px 0;font-size:16px;">Submit Your Code</h3>
+    <input type="text" id="upTitle" placeholder="Title (e.g. My bubble sort implementation)">
+    <input type="text" id="upDesc" placeholder="Short description (optional)">
+    <select id="upLang">
+      <option value="plaintext">Plain Text</option>
+      <option value="javascript">JavaScript</option>
+      <option value="python">Python</option>
+      <option value="html">HTML</option>
+      <option value="css">CSS</option>
+      <option value="typescript">TypeScript</option>
+      <option value="java">Java</option>
+      <option value="cpp">C++</option>
+      <option value="c">C</option>
+      <option value="csharp">C#</option>
+      <option value="rust">Rust</option>
+      <option value="go">Go</option>
+      <option value="php">PHP</option>
+      <option value="ruby">Ruby</option>
+      <option value="swift">Swift</option>
+      <option value="kotlin">Kotlin</option>
+      <option value="sql">SQL</option>
+      <option value="bash">Bash</option>
+      <option value="json">JSON</option>
+    </select>
+    <textarea id="upCode" rows="8" placeholder="Paste your code here..." style="font-family:monospace;"></textarea>
+    <button class="btn" onclick="submitUpgrade()">Submit</button>
+  </div>
+  <div id="upgradeList"><div class="empty">Loading...</div></div>
+</div>
+<script src="../js/main.js"></script>
+<script>
+const API="https://codingeveryday-api.onrender.com";
+const ME=getUsername();
+const LOGGEDIN=ME&&ME!=="Guest";
+if(!LOGGEDIN){document.getElementById("guestNotice").style.display="block";document.getElementById("submitBox").style.display="none";}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+async function loadUpgrades(){
+  const list=document.getElementById("upgradeList");
+  try{
+    const res=await fetch(API+"/upgrades?username="+encodeURIComponent(ME));
+    const data=await res.json();
+    if(!data.upgrades||!data.upgrades.length){list.innerHTML='<div class="empty">No code posted yet. Be the first!</div>';return;}
+    list.innerHTML=data.upgrades.map(u=>`
+      <div class="card">
+        <div style="font-size:17px;font-weight:bold;margin-bottom:4px;">${esc(u.title)}</div>
+        ${u.desc?`<div style="font-size:13px;color:#ccc;margin-bottom:8px;">${esc(u.desc)}</div>`:""}
+        <span class="lang-tag">${esc(u.language)}</span>
+        <div style="font-size:12px;color:#777;margin-bottom:8px;">by <strong>${esc(u.author)}</strong> — <em>Beta Version</em></div>
+        <pre><code class="language-${esc(u.language)}">${esc(u.code)}</code></pre>
+        <div class="vote-row">
+          ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${u.uservote===1?"active-up":""}" onclick="voteUpgrade(${u.id},1)">👍</button>`:`<button class="btn btn-sm" onclick="noAuth()">👍</button>`}
+          <span class="score">${u.votes}</span>
+          ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${u.uservote===-1?"active-down":""}" onclick="voteUpgrade(${u.id},-1)">👎</button>`:`<button class="btn btn-sm" onclick="noAuth()">👎</button>`}
+          <button class="toggle-btn btn-sm" onclick="toggleVersions(${u.id})">💬 View Upgrades</button>
+        </div>
+        <div class="versions-panel" id="vp-${u.id}">
+          <div id="versions-${u.id}"></div>
+          ${LOGGEDIN?`
+          <div class="submit-version">
+            <div style="font-size:13px;font-weight:bold;margin-bottom:8px;">Submit Your Upgrade</div>
+            <textarea id="vc-${u.id}" rows="7" placeholder="Your upgraded code..." style="font-family:monospace;"></textarea>
+            <textarea id="ve-${u.id}" rows="2" placeholder="What did you improve?"></textarea>
+            <button class="btn" onclick="postVersion(${u.id},'${esc(u.language)}')">Submit Upgrade</button>
+          </div>`:`<div style="font-size:12px;color:#aaa;margin-top:8px;"><a href="/login" style="color:#ffd966;">Log in</a> to submit an upgrade</div>`}
+        </div>
+      </div>`).join("");
+    // highlight all code blocks
+    document.querySelectorAll("pre code").forEach(el=>hljs.highlightElement(el));
+  }catch(e){list.innerHTML='<div class="empty">Failed to load.</div>';}
+}
+
+async function loadVersions(upgradeId,lang){
+  const res=await fetch(API+"/upgrades/"+upgradeId+"/versions?username="+encodeURIComponent(ME));
+  const data=await res.json();
+  const el=document.getElementById("versions-"+upgradeId);
+  if(!el)return;
+  if(!data.versions||!data.versions.length){el.innerHTML='<div style="font-size:12px;color:#555;margin-bottom:8px;">No upgrades yet.</div>';return;}
+  el.innerHTML=data.versions.map((v,i)=>`
+    <div class="version-card" ${i===0?"style='border:1px solid rgba(255,255,255,0.2);'":""}>
+      <div class="version-author">${esc(v.author)} Version ${i===0?'<span style="background:rgba(255,255,255,0.15);border-radius:4px;padding:2px 8px;font-size:11px;">⭐ Top</span>':""}</div>
+      ${v.explanation?`<div class="version-explanation">"${esc(v.explanation)}"</div>`:""}
+      <pre><code class="language-${lang||"plaintext"}">${esc(v.code)}</code></pre>
+      <div class="version-vote">
+        ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${v.uservote===1?"active-up":""}" onclick="voteVersion(${upgradeId},${v.id},1,'${lang}')">👍</button>`:`<button class="btn btn-sm" onclick="noAuth()">👍</button>`}
+        <span style="font-size:13px;font-weight:bold;">${v.votes}</span>
+        ${LOGGEDIN?`<button class="btn btn-sm vote-btn ${v.uservote===-1?"active-down":""}" onclick="voteVersion(${upgradeId},${v.id},-1,'${lang}')">👎</button>`:`<button class="btn btn-sm" onclick="noAuth()">👎</button>`}
+      </div>
+    </div>`).join("");
+  document.querySelectorAll("#versions-"+upgradeId+" pre code").forEach(el=>hljs.highlightElement(el));
+}
+
+function toggleVersions(id){
+  const panel=document.getElementById("vp-"+id);
+  const isOpen=panel.style.display==="block";
+  panel.style.display=isOpen?"none":"block";
+  if(!isOpen) loadVersions(id);
+}
+
+async function submitUpgrade(){
+  const title=document.getElementById("upTitle").value.trim();
+  const desc=document.getElementById("upDesc").value.trim();
+  const code=document.getElementById("upCode").value.trim();
+  const language=document.getElementById("upLang").value;
+  if(!title||!code){alert("Title and code are required.");return;}
+  const r=await fetch(API+"/upgrades",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,desc,code,language,username:ME})});
+  const d=await r.json();
+  if(d.status==="ok"){document.getElementById("upTitle").value="";document.getElementById("upDesc").value="";document.getElementById("upCode").value="";loadUpgrades();}
+  else alert(d.message);
+}
+
+async function voteUpgrade(id,val){
+  await fetch(API+"/upgrades/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,val,username:ME})});
+  loadUpgrades();
+}
+
+async function postVersion(upgradeId,lang){
+  const code=document.getElementById("vc-"+upgradeId).value.trim();
+  const explanation=document.getElementById("ve-"+upgradeId).value.trim();
+  if(!code){alert("Code is required.");return;}
+  const r=await fetch(API+"/upgrades/"+upgradeId+"/versions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code,explanation,username:ME})});
+  const d=await r.json();
+  if(d.status==="ok"){document.getElementById("vc-"+upgradeId).value="";document.getElementById("ve-"+upgradeId).value="";loadVersions(upgradeId,lang);}
+  else alert(d.message);
+}
+
+async function voteVersion(upgradeId,versionId,val,lang){
+  await fetch(API+"/upgrades/versions/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:versionId,val,username:ME})});
+  loadVersions(upgradeId,lang);
+}
+
+function noAuth(){alert("Please log in to interact.");}
+loadUpgrades();
+</script>
+</body>
+</html>
