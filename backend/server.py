@@ -4,7 +4,7 @@ import psycopg2
 import os
 
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, origins="*", supports_credentials=True, allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
