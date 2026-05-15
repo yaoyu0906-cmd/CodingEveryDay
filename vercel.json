@@ -6,6 +6,7 @@
     { "src": "/projects", "dest": "/projects/index.html" },
     { "src": "/monthly", "dest": "/monthly/index.html" },
     { "src": "/qa", "dest": "/qa/index.html" },
-    { "src": "/upgrade", "dest": "/upgrade/index.html" }
+    { "src": "/upgrade", "dest": "/upgrade/index.html" },
+    { "src": "/webshare", "dest": "/webshare/index.html" }
   ]
 }
