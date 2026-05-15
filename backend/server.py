@@ -1,19 +1,39 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import psycopg2
 import os
+import random
+import string
+import time
+import psycopg2
+import traceback
+
+try:
+    from supabase import create_client
+    SUPABASE_ENABLED = True
+except ImportError:
+    SUPABASE_ENABLED = False
+    print("WARNING: supabase package not installed")
 
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, origins="*", supports_credentials=True,
+     allow_headers=["Content-Type"], methods=["GET","POST","OPTIONS"])
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+BUCKET = "webshare"
 
 def get_conn():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+def get_supabase():
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def gen_token():
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+
 def init_db():
-    conn = get_conn()
-    cur = conn.cursor()
+    conn = get_conn(); cur = conn.cursor()
 
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY, password TEXT NOT NULL)""")
@@ -91,9 +111,18 @@ def init_db():
         username TEXT NOT NULL, version_id INTEGER NOT NULL, vote INTEGER NOT NULL,
         PRIMARY KEY (username, version_id))""")
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    cur.execute("""CREATE TABLE IF NOT EXISTS share_sessions (
+        token TEXT PRIMARY KEY, creator TEXT NOT NULL,
+        created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL,
+        total_size BIGINT DEFAULT 0)""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS share_files (
+        id SERIAL PRIMARY KEY, token TEXT NOT NULL,
+        filename TEXT NOT NULL, storage_path TEXT NOT NULL,
+        uploader TEXT NOT NULL, size BIGINT NOT NULL,
+        mime_type TEXT, uploaded_at BIGINT NOT NULL)""")
+
+    conn.commit(); cur.close(); conn.close()
 
 # ---- helpers ----
 def do_vote(cur, table, pk_col, id_val, username, val):
@@ -101,13 +130,11 @@ def do_vote(cur, table, pk_col, id_val, username, val):
     row = cur.fetchone()
     existing = row[0] if row else 0
     if existing == val:
-        delta = -val
-        new_vote = 0
+        delta = -val; new_vote = 0
         if existing != 0:
             cur.execute(f"DELETE FROM {table} WHERE username=%s AND {pk_col}=%s", (username, id_val))
     else:
-        delta = val - existing
-        new_vote = val
+        delta = val - existing; new_vote = val
         cur.execute(f"""INSERT INTO {table} (username, {pk_col}, vote) VALUES (%s,%s,%s)
             ON CONFLICT (username, {pk_col}) DO UPDATE SET vote=%s""", (username, id_val, val, val))
     return delta, new_vote
@@ -117,6 +144,24 @@ def require_login(data):
     if not username or username == "Guest":
         return None, jsonify({"status": "error", "message": "Login required"})
     return username, None
+
+def cleanup_session(token, cur, sb):
+    cur.execute("SELECT storage_path FROM share_files WHERE token=%s", (token,))
+    paths = [r[0] for r in cur.fetchall()]
+    if paths:
+        try: sb.storage.from_(BUCKET).remove(paths)
+        except: pass
+    cur.execute("DELETE FROM share_files WHERE token=%s", (token,))
+    cur.execute("DELETE FROM share_sessions WHERE token=%s", (token,))
+
+def check_expired(token, cur, sb):
+    cur.execute("SELECT expires_at FROM share_sessions WHERE token=%s", (token,))
+    row = cur.fetchone()
+    if not row: return True
+    if int(time.time()) > row[0]:
+        cleanup_session(token, cur, sb)
+        return True
+    return False
 
 # ===== AUTH =====
 @app.route("/signup", methods=["POST"])
@@ -426,7 +471,7 @@ def vote_answer():
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
-# ===== UPGRADE THE CODE =====
+# ===== UPGRADES =====
 @app.route("/upgrades", methods=["GET"])
 def get_upgrades():
     username = request.args.get("username","")
@@ -518,14 +563,13 @@ def vote_version():
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
-# ===== OF THE MONTH (best across all categories) =====
+# ===== MONTHLY =====
 @app.route("/monthly", methods=["GET"])
 def get_monthly():
     try:
         conn = get_conn(); cur = conn.cursor()
         results = {}
         for table, key in [("ideas","idea"),("projects","project"),("qa","question"),("upgrades","upgrade")]:
-            cols = "id,title,description,author,votes" if table != "projects" else "id,title,description,author,votes"
             cur.execute(f"SELECT id,title,description,author,votes FROM {table} ORDER BY votes DESC LIMIT 1")
             r = cur.fetchone()
             if r: results[key] = {"id":r[0],"title":r[1],"desc":r[2],"author":r[3],"votes":r[4]}
@@ -535,63 +579,17 @@ def get_monthly():
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
-if __name__ == "__main__":
-    init_db()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
 # ===== WEB SHARE =====
-import random, string, time
-from supabase import create_client
-
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
-BUCKET = "webshare"
-
-def get_supabase():
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def gen_token():
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
-
-def init_webshare(cur):
-    cur.execute("""CREATE TABLE IF NOT EXISTS share_sessions (
-        token TEXT PRIMARY KEY, creator TEXT NOT NULL,
-        created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL,
-        total_size BIGINT DEFAULT 0)""")
-    cur.execute("""CREATE TABLE IF NOT EXISTS share_files (
-        id SERIAL PRIMARY KEY, token TEXT NOT NULL,
-        filename TEXT NOT NULL, storage_path TEXT NOT NULL,
-        uploader TEXT NOT NULL, size BIGINT NOT NULL,
-        mime_type TEXT, uploaded_at BIGINT NOT NULL)""")
-
-def cleanup_session(token, cur, sb):
-    cur.execute("SELECT storage_path FROM share_files WHERE token=%s", (token,))
-    paths = [r[0] for r in cur.fetchall()]
-    if paths:
-        try: sb.storage.from_(BUCKET).remove(paths)
-        except: pass
-    cur.execute("DELETE FROM share_files WHERE token=%s", (token,))
-    cur.execute("DELETE FROM share_sessions WHERE token=%s", (token,))
-
-def check_expired(token, cur, sb):
-    cur.execute("SELECT expires_at FROM share_sessions WHERE token=%s", (token,))
-    row = cur.fetchone()
-    if not row: return True
-    if int(time.time()) > row[0]:
-        cleanup_session(token, cur, sb)
-        return True
-    return False
-
-@app.route("/share/create", methods=["POST"])
+@app.route("/share/create", methods=["POST", "OPTIONS"])
 def create_share():
+    if request.method == "OPTIONS":
+        return "", 200
     data = request.get_json()
     creator = data.get("username", "Guest")
     now = int(time.time())
     expires = now + 3600
     try:
         conn = get_conn(); cur = conn.cursor()
-        init_webshare(cur)
         token = gen_token()
         for _ in range(10):
             cur.execute("SELECT token FROM share_sessions WHERE token=%s", (token,))
@@ -621,8 +619,10 @@ def get_share(token):
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
-@app.route("/share/<token>/upload", methods=["POST"])
+@app.route("/share/<token>/upload", methods=["POST", "OPTIONS"])
 def upload_file(token):
+    if request.method == "OPTIONS":
+        return "", 200
     try:
         conn = get_conn(); cur = conn.cursor()
         sb = get_supabase()
@@ -660,12 +660,15 @@ def download_file(token, file_id):
         row = cur.fetchone(); cur.close(); conn.close()
         if not row: return jsonify({"status":"error","message":"File not found"})
         res = sb.storage.from_(BUCKET).create_signed_url(row[0], 60)
-        return jsonify({"status":"ok","url":res["signedURL"],"filename":row[1]})
+        url = res.get("signedURL") or res.get("signedUrl") or res
+        return jsonify({"status":"ok","url":url,"filename":row[1]})
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
-@app.route("/share/<token>/end", methods=["POST"])
+@app.route("/share/<token>/end", methods=["POST", "OPTIONS"])
 def end_share(token):
+    if request.method == "OPTIONS":
+        return "", 200
     try:
         conn = get_conn(); cur = conn.cursor()
         sb = get_supabase()
