@@ -540,4 +540,148 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
+# ===== WEB SHARE =====
+import random, string, time
+from supabase import create_client
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+BUCKET = "webshare"
+
+def get_supabase():
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def gen_token():
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+
+def init_webshare(cur):
+    cur.execute("""CREATE TABLE IF NOT EXISTS share_sessions (
+        token TEXT PRIMARY KEY, creator TEXT NOT NULL,
+        created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL,
+        total_size BIGINT DEFAULT 0)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS share_files (
+        id SERIAL PRIMARY KEY, token TEXT NOT NULL,
+        filename TEXT NOT NULL, storage_path TEXT NOT NULL,
+        uploader TEXT NOT NULL, size BIGINT NOT NULL,
+        mime_type TEXT, uploaded_at BIGINT NOT NULL)""")
+
+def cleanup_session(token, cur, sb):
+    cur.execute("SELECT storage_path FROM share_files WHERE token=%s", (token,))
+    paths = [r[0] for r in cur.fetchall()]
+    if paths:
+        try: sb.storage.from_(BUCKET).remove(paths)
+        except: pass
+    cur.execute("DELETE FROM share_files WHERE token=%s", (token,))
+    cur.execute("DELETE FROM share_sessions WHERE token=%s", (token,))
+
+def check_expired(token, cur, sb):
+    cur.execute("SELECT expires_at FROM share_sessions WHERE token=%s", (token,))
+    row = cur.fetchone()
+    if not row: return True
+    if int(time.time()) > row[0]:
+        cleanup_session(token, cur, sb)
+        return True
+    return False
+
+@app.route("/share/create", methods=["POST"])
+def create_share():
+    data = request.get_json()
+    creator = data.get("username", "Guest")
+    now = int(time.time())
+    expires = now + 3600
+    try:
+        conn = get_conn(); cur = conn.cursor()
+        init_webshare(cur)
+        token = gen_token()
+        for _ in range(10):
+            cur.execute("SELECT token FROM share_sessions WHERE token=%s", (token,))
+            if not cur.fetchone(): break
+            token = gen_token()
+        cur.execute("INSERT INTO share_sessions (token,creator,created_at,expires_at,total_size) VALUES (%s,%s,%s,%s,0)",
+            (token, creator, now, expires))
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({"status":"ok","token":token,"expires_at":expires})
+    except Exception as e:
+        return jsonify({"status":"error","message":str(e)})
+
+@app.route("/share/<token>", methods=["GET"])
+def get_share(token):
+    try:
+        conn = get_conn(); cur = conn.cursor()
+        sb = get_supabase()
+        if check_expired(token, cur, sb):
+            conn.commit(); cur.close(); conn.close()
+            return jsonify({"status":"error","message":"Session expired or not found"})
+        cur.execute("SELECT creator,expires_at,total_size FROM share_sessions WHERE token=%s", (token,))
+        sess = cur.fetchone()
+        cur.execute("SELECT id,filename,uploader,size,mime_type,uploaded_at FROM share_files WHERE token=%s ORDER BY uploaded_at ASC", (token,))
+        files = [{"id":r[0],"filename":r[1],"uploader":r[2],"size":r[3],"mime_type":r[4],"uploaded_at":r[5]} for r in cur.fetchall()]
+        cur.close(); conn.close()
+        return jsonify({"status":"ok","creator":sess[0],"expires_at":sess[1],"total_size":sess[2],"files":files})
+    except Exception as e:
+        return jsonify({"status":"error","message":str(e)})
+
+@app.route("/share/<token>/upload", methods=["POST"])
+def upload_file(token):
+    try:
+        conn = get_conn(); cur = conn.cursor()
+        sb = get_supabase()
+        if check_expired(token, cur, sb):
+            conn.commit(); cur.close(); conn.close()
+            return jsonify({"status":"error","message":"Session expired"})
+        f = request.files.get("file")
+        uploader = request.form.get("username", "Guest")
+        if not f: return jsonify({"status":"error","message":"No file"})
+        data = f.read(); size = len(data)
+        if size > 25*1024*1024: return jsonify({"status":"error","message":"File too large (max 25MB)"})
+        cur.execute("SELECT total_size FROM share_sessions WHERE token=%s", (token,))
+        total = cur.fetchone()[0]
+        if total + size > 500*1024*1024: return jsonify({"status":"error","message":"Session storage full (max 500MB)"})
+        path = f"{token}/{int(time.time())}_{f.filename}"
+        sb.storage.from_(BUCKET).upload(path, data, {"content-type": f.content_type or "application/octet-stream"})
+        now = int(time.time())
+        cur.execute("INSERT INTO share_files (token,filename,storage_path,uploader,size,mime_type,uploaded_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (token, f.filename, path, uploader, size, f.content_type, now))
+        cur.execute("UPDATE share_sessions SET total_size=total_size+%s WHERE token=%s", (size, token))
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({"status":"ok"})
+    except Exception as e:
+        return jsonify({"status":"error","message":str(e)})
+
+@app.route("/share/<token>/download/<int:file_id>", methods=["GET"])
+def download_file(token, file_id):
+    try:
+        conn = get_conn(); cur = conn.cursor()
+        sb = get_supabase()
+        if check_expired(token, cur, sb):
+            conn.commit(); cur.close(); conn.close()
+            return jsonify({"status":"error","message":"Session expired"})
+        cur.execute("SELECT storage_path,filename FROM share_files WHERE id=%s AND token=%s", (file_id, token))
+        row = cur.fetchone(); cur.close(); conn.close()
+        if not row: return jsonify({"status":"error","message":"File not found"})
+        res = sb.storage.from_(BUCKET).create_signed_url(row[0], 60)
+        return jsonify({"status":"ok","url":res["signedURL"],"filename":row[1]})
+    except Exception as e:
+        return jsonify({"status":"error","message":str(e)})
+
+@app.route("/share/<token>/end", methods=["POST"])
+def end_share(token):
+    try:
+        conn = get_conn(); cur = conn.cursor()
+        sb = get_supabase()
+        cur.execute("SELECT creator FROM share_sessions WHERE token=%s", (token,))
+        if not cur.fetchone():
+            return jsonify({"status":"error","message":"Session not found"})
+        cleanup_session(token, cur, sb)
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({"status":"ok"})
+    except Exception as e:
+        return jsonify({"status":"error","message":str(e)})
+
+# ===== RUN =====
+if __name__ == "__main__":
+    init_db()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
 init_db()
