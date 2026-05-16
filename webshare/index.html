@@ -221,9 +221,8 @@ function enterSession(token, expiresAt, creator, data){
   currentToken=token;
   isCreator=creator;
   document.getElementById("tokenDisplay").textContent=token;
-  document.getElementById("endBtn").style.display=creator?"inline-block":"none";
+  document.getElementById("endBtn").style.display=(creator && ME && ME!=="Guest")?"inline-block":"none";
   showView("viewSession");
-  startTimer(expiresAt);
   if(data) renderSession(data);
   else loadSession();
   pollInterval=setInterval(loadSession,4000);
@@ -240,6 +239,7 @@ async function loadSession(){
 }
 
 function renderSession(d){
+  startTimer(d.expires_at);
   document.getElementById("creatorDisplay").textContent=d.creator;
   const pct=Math.min(100,(d.total_size/(500*1024*1024))*100).toFixed(1);
   document.getElementById("storageFill").style.width=pct+"%";
