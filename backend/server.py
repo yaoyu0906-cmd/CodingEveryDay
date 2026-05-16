@@ -674,12 +674,17 @@ def download_file(token, file_id):
 def end_share(token):
     if request.method == "OPTIONS":
         return "", 200
+    data = request.get_json()
+    username = data.get("username", "Guest")
     try:
         conn = get_conn(); cur = conn.cursor()
         sb = get_supabase()
         cur.execute("SELECT creator FROM share_sessions WHERE token=%s", (token,))
-        if not cur.fetchone():
+        row = cur.fetchone()
+        if not row:
             return jsonify({"status":"error","message":"Session not found"})
+        if row[0] != username:
+            return jsonify({"status":"error","message":"Only the creator can end this session"})
         cleanup_session(token, cur, sb)
         conn.commit(); cur.close(); conn.close()
         return jsonify({"status":"ok"})
