@@ -643,6 +643,7 @@ def upload_file(token):
         cur.execute("INSERT INTO share_files (token,filename,storage_path,uploader,size,mime_type,uploaded_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
             (token, f.filename, path, uploader, size, f.content_type, now))
         cur.execute("UPDATE share_sessions SET total_size=total_size+%s WHERE token=%s", (size, token))
+        cur.execute("UPDATE share_sessions SET expires_at=%s WHERE token=%s", (int(time.time())+3600, token))
         conn.commit(); cur.close(); conn.close()
         return jsonify({"status":"ok"})
     except Exception as e:
@@ -657,6 +658,8 @@ def download_file(token, file_id):
             conn.commit(); cur.close(); conn.close()
             return jsonify({"status":"error","message":"Session expired"})
         cur.execute("SELECT storage_path,filename FROM share_files WHERE id=%s AND token=%s", (file_id, token))
+        cur.execute("UPDATE share_sessions SET expires_at=%s WHERE token=%s", (int(time.time())+3600, token))
+        conn.commit()
         row = cur.fetchone(); cur.close(); conn.close()
         if not row: return jsonify({"status":"error","message":"File not found"})
         res = sb.storage.from_(BUCKET).create_signed_url(row[0], 60)
