@@ -204,7 +204,7 @@ async function createSession(){
     const r=await fetch(API+"/share/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:ME})});
     const d=await r.json();
     if(d.status!=="ok"){alert(d.message);return;}
-    enterSession(d.token, d.expires_at, true);
+    enterSession(d.token, d.expires_at, true, null);
   }catch(e){alert("Failed to create session.");}
 }
 
