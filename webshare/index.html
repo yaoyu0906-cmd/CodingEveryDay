@@ -185,15 +185,17 @@ function showView(view){
 }
 
 // ---- timer ----
-function startTimer(expiresAt){
-  clearInterval(timerInterval);
-  timerInterval = setInterval(()=>{
-    const left = expiresAt - Math.floor(Date.now()/1000);
-    if(left<=0){clearInterval(timerInterval);alert("Session expired.");leaveSession();return;}
-    const m=String(Math.floor(left/60)).padStart(2,"0");
-    const s=String(left%60).padStart(2,"0");
-    document.getElementById("timerDisplay").textContent="⏱ "+m+":"+s;
-  },1000);
+let expiresAtGlobal = 0;
+
+function startTimer(){
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+        const left = expiresAtGlobal - Math.floor(Date.now()/1000);
+        if(left<=0){clearInterval(timerInterval);alert("Session expired.");leaveSession();return;}
+        const m=String(Math.floor(left/60)).padStart(2,"0");
+        const s=String(left%60).padStart(2,"0");
+        document.getElementById("timerDisplay").textContent="⏱ "+m+":"+s;
+    },1000);
 }
 
 // ---- create ----
@@ -222,6 +224,8 @@ function enterSession(token, expiresAt, creator, data){
   isCreator=creator;
   document.getElementById("tokenDisplay").textContent=token;
   document.getElementById("endBtn").style.display=(creator && ME && ME!=="Guest")?"inline-block":"none";
+  expiresAtGlobal = expiresAt;
+  startTimer();
   showView("viewSession");
   if(data) renderSession(data);
   else loadSession();
@@ -239,7 +243,7 @@ async function loadSession(){
 }
 
 function renderSession(d){
-  startTimer(d.expires_at);
+  expiresAtGlobal = d.expires_at;
   document.getElementById("creatorDisplay").textContent=d.creator;
   const pct=Math.min(100,(d.total_size/(500*1024*1024))*100).toFixed(1);
   document.getElementById("storageFill").style.width=pct+"%";
