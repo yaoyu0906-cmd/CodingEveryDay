@@ -633,7 +633,7 @@ def upload_file(token):
         uploader = request.form.get("username", "Guest")
         if not f: return jsonify({"status":"error","message":"No file"})
         data = f.read(); size = len(data)
-        if size > 25*1024*1024: return jsonify({"status":"error","message":"File too large (max 25MB)"})
+        if size > 100*1024*1024: return jsonify({"status":"error","message":"File too large (max 100MB)"})
         cur.execute("SELECT total_size FROM share_sessions WHERE token=%s", (token,))
         total = cur.fetchone()[0]
         if total + size > 500*1024*1024: return jsonify({"status":"error","message":"Session storage full (max 500MB)"})
