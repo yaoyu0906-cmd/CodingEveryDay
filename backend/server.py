@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import threading
 import random
 import string
 import time
@@ -691,6 +692,24 @@ def end_share(token):
     except Exception as e:
         return jsonify({"status":"error","message":str(e)})
 
+def cleanup_loop():
+    while True:
+        time.sleep(1200)  # 20 minutes
+        try:
+            conn = get_conn(); cur = conn.cursor()
+            sb = get_supabase()
+            now = int(time.time())
+            cur.execute("SELECT token FROM share_sessions WHERE expires_at < %s", (now,))
+            expired = [r[0] for r in cur.fetchall()]
+            for token in expired:
+                cleanup_session(token, cur, sb)
+            if expired:
+                conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            print("Cleanup error:", e)
+
+threading.Thread(target=cleanup_loop, daemon=True).start()
 # ===== RUN =====
 if __name__ == "__main__":
     init_db()
