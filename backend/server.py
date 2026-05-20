@@ -152,6 +152,12 @@ def cleanup_session(token, cur, sb):
     if paths:
         try: sb.storage.from_(BUCKET).remove(paths)
         except: pass
+    try:
+        folder_contents = sb.storage.from_(BUCKET).list(token)
+        if folder_contents:
+            extra = [f"{token}/{f['name']}" for f in folder_contents]
+            sb.storage.from_(BUCKET).remove(extra)
+    except: pass
     cur.execute("DELETE FROM share_files WHERE token=%s", (token,))
     cur.execute("DELETE FROM share_sessions WHERE token=%s", (token,))
 
@@ -694,7 +700,7 @@ def end_share(token):
 
 def cleanup_loop():
     while True:
-        time.sleep(1200)  # 20 minutes
+        time.sleep(1800)  #30 mins
         try:
             conn = get_conn(); cur = conn.cursor()
             sb = get_supabase()
@@ -708,8 +714,6 @@ def cleanup_loop():
             cur.close(); conn.close()
         except Exception as e:
             print("Cleanup error:", e)
-
-threading.Thread(target=cleanup_loop, daemon=True).start()
 # ===== RUN =====
 if __name__ == "__main__":
     init_db()
