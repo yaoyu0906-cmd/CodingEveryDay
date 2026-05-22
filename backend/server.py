@@ -714,6 +714,8 @@ def cleanup_loop():
             cur.close(); conn.close()
         except Exception as e:
             print("Cleanup error:", e)
+threading.Thread(target=cleanup_loop, daemon=True).start()
+
 # ===== RUN =====
 if __name__ == "__main__":
     init_db()
