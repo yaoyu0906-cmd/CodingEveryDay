@@ -611,6 +611,20 @@ def create_share():
 
 @app.route("/share/<token>", methods=["GET"])
 def get_share(token):
+    # clean all expired sessions on every visit
+    try:
+        conn2 = get_conn(); cur2 = conn2.cursor()
+        sb2 = get_supabase()
+        now = int(time.time())
+        cur2.execute("SELECT token FROM share_sessions WHERE expires_at < %s", (now,))
+        expired = [r[0] for r in cur2.fetchall()]
+        for t in expired:
+            cleanup_session(t, cur2, sb2)
+        if expired:
+            conn2.commit()
+        cur2.close(); conn2.close()
+    except: pass
+
     try:
         conn = get_conn(); cur = conn.cursor()
         sb = get_supabase()
