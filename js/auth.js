@@ -1,67 +1,60 @@
-// ── WorkingEveryday Auth ────────────────────────────────────────────────────
+function signup() {
+    const inputs = document.querySelectorAll(".input");
+    const username = inputs[0].value.trim();
+    const password = inputs[1].value;
+    const confirm = inputs[2].value;
 
-// call this on every protected page to redirect if not logged in
-async function requireAuth() {
-  const res = await api.me();
-  if (res.error) {
-    location.href = "/login";
-    return null;
-  }
-  return res;
+    if (!username) {
+        alert("Please enter a username.");
+        return;
+    }
+
+    if (!password) {
+        alert("Please enter a password.");
+        return;
+    }
+
+    if (password !== confirm) {
+        alert("Passwords do not match!");
+        return;
+    }
+
+    fetch("https://codingeveryday-api.onrender.com/signup", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.status === "ok") {
+            localStorage.setItem("username", username);
+            window.location.href = "/main";
+        }
+    });
 }
 
-// get stored username for display (fallback)
-function getUsername() {
-  return sessionStorage.getItem("wed_username") || "User";
-}
+function login() {
+    const inputs = document.querySelectorAll(".input");
+    const username = inputs[0].value.trim();
+    const password = inputs[1].value;
 
-// ── signup ─────────────────────────────────────────────────────────────────
-async function signup() {
-  const inputs = document.querySelectorAll(".input");
-  const username = inputs[0].value.trim();
-  const password = inputs[1].value.trim();
-  const confirm  = inputs[2].value.trim();
+    if (!username) {
+        alert("Please enter a username.");
+        return;
+    }
 
-  if (!username || !password) return showError("Please fill in all fields.");
-  if (password !== confirm)   return showError("Passwords don't match.");
-
-  const res = await api.signup(username, password);
-  if (res.error) return showError(res.error);
-
-  sessionStorage.setItem("wed_username", res.user.username);
-  location.href = "/main";
-}
-
-// ── login ──────────────────────────────────────────────────────────────────
-async function login() {
-  const inputs = document.querySelectorAll(".input");
-  const username = inputs[0].value.trim();
-  const password = inputs[1].value.trim();
-
-  if (!username || !password) return showError("Please fill in all fields.");
-
-  const res = await api.login(username, password);
-  if (res.error) return showError(res.error);
-
-  sessionStorage.setItem("wed_username", res.user.username);
-  location.href = "/main";
-}
-
-// ── logout ─────────────────────────────────────────────────────────────────
-async function logout() {
-  await api.logout();
-  sessionStorage.clear();
-  location.href = "/";
-}
-
-// ── error display ──────────────────────────────────────────────────────────
-function showError(msg) {
-  let el = document.getElementById("wed-error");
-  if (!el) {
-    el = document.createElement("p");
-    el.id = "wed-error";
-    el.style.cssText = "color:#ff6b6b;font-size:13px;margin:8px 0 0;";
-    document.querySelector(".box").appendChild(el);
-  }
-  el.textContent = msg;
+    fetch("https://codingeveryday-api.onrender.com/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.status === "ok") {
+            localStorage.setItem("username", username);
+            window.location.href = "/main";
+        }
+    });
 }
